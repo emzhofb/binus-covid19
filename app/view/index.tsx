@@ -1,13 +1,17 @@
-// view/HomeScreenView.tsx
 import React from 'react';
 import { StyleSheet, FlatList, Text, View, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { useRouter } from 'expo-router'; // Import the useRouter hook
 import { ItemData } from '../model/index';
 import { useHomeScreenViewModel } from '../view-model/index';
 
 const HomeScreenView: React.FC = () => {
   const { items, loading, error } = useHomeScreenViewModel();
+  const router = useRouter(); // Initialize the router
+
+  const handlePress = (id: string) => {
+    // Navigate to the 'details' screen passing the smartphone id
+    router.push(`/details?id=${id}`);
+  };
 
   if (loading) {
     return (
@@ -40,23 +44,25 @@ const HomeScreenView: React.FC = () => {
       ) : (
         <Text style={styles.noDetails}>No details available</Text>
       )}
+      {/* Add press event to navigate to the details screen */}
+      <Text style={styles.detailsButton} onPress={() => handlePress(item.id)}>
+        View Details
+      </Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      <ThemedView style={styles.container}>
-        <View style={styles.headerContainer}>
-          <ThemedText type="title" style={styles.title}>Binus MVVM!</ThemedText>
-          <Text style={styles.subtitle}>List of the Smartphones</Text>
-        </View>
-        <FlatList
-          data={items}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-        />
-      </ThemedView>
+      <View style={styles.headerContainer}>
+        <Text style={styles.title}>Binus Apps!</Text>
+        <Text style={styles.subtitle}>List of the Smartphones</Text>
+      </View>
+      <FlatList
+        data={items}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+      />
     </SafeAreaView>
   );
 };
@@ -64,7 +70,7 @@ const HomeScreenView: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 30,
     backgroundColor: '#F5F5F5',
   },
   headerContainer: {
@@ -91,11 +97,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 1,
   },
   itemName: {
     fontSize: 18,
@@ -122,6 +123,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: 'red',
+  },
+  detailsButton: {
+    color: 'blue',
+    marginTop: 8,
+    textDecorationLine: 'underline',
   },
 });
 
