@@ -1,44 +1,47 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
-import { useGlobalSearchParams } from 'expo-router'; // Correct import for query parameters
+import MapView, { Marker } from 'react-native-maps';
+import { useGlobalSearchParams } from 'expo-router';
 
-// Define the interface for the 'data' object
-interface ItemDataDetails {
-  color: string;
-  "capacity GB": number; // You can also use `capacityGB` if you want a cleaner key
-}
-
-// In your component (where you access smartphone)
-interface Smartphone {
-  id: string;
-  name: string;
-  data: ItemDataDetails;
-  // Add other fields as necessary based on your API response
+interface ProvinceLocation {
+  lat: number;
+  lon: number;
+  display_name: string;
 }
 
 export default function DetailsScreen() {
-  const { id } = useGlobalSearchParams(); // Use useSearchParams to extract query parameters
+  const { province } = useGlobalSearchParams();
   const [loading, setLoading] = useState(true);
-  const [smartphone, setSmartphone] = useState<Smartphone | null>(null);
+  const [location, setLocation] = useState<ProvinceLocation | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) return; // If no id is present, don't make a request
+    if (!province) return;
 
-    const fetchSmartphoneDetails = async () => {
+    const fetchProvinceCoordinates = async () => {
       try {
-        const response = await fetch(`https://api.restful-api.dev/objects?id=${id}`);
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?state=${province}&country=Indonesia&format=json`
+        );
         const data = await response.json();
-        setSmartphone(data[0]);
+        if (data.length > 0) {
+          setLocation({
+            lat: parseFloat(data[0].lat),
+            lon: parseFloat(data[0].lon),
+            display_name: data[0].display_name,
+          });
+        } else {
+          setError('Coordinates not found for the specified province');
+        }
       } catch (err) {
-        setError('Failed to fetch smartphone details');
+        setError('Failed to fetch coordinates');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSmartphoneDetails();
-  }, [id]);
+    fetchProvinceCoordinates();
+  }, [province]);
 
   if (loading) {
     return (
@@ -58,18 +61,26 @@ export default function DetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{smartphone?.name}</Text>
-      {smartphone?.data ? (
-        <View style={styles.detailsContainer}>
-          {Object.entries(smartphone.data).map(([key, value], index) => (
-            <View key={index} style={styles.detailRow}>
-              <Text style={styles.detailKey}>{key}:</Text>
-              <Text style={styles.detailValue}>{String(value)}</Text>
-            </View>
-          ))}
-        </View>
+      {location ? (
+        <>
+          <Text style={styles.title}>{location.display_name}</Text>
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: location.lat,
+              longitude: location.lon,
+              latitudeDelta: 1,  // Adjust for zoom level
+              longitudeDelta: 1,
+            }}
+          >
+            <Marker
+              coordinate={{ latitude: location.lat, longitude: location.lon }}
+              title={location.display_name}
+            />
+          </MapView>
+        </>
       ) : (
-        <Text style={styles.noDetails}>No details available</Text>
+        <Text style={styles.noDetails}>No location details available</Text>
       )}
     </View>
   );
@@ -82,29 +93,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 10,
   },
-  detailsContainer: {
-    marginTop: 8,
+  map: {
+    width: '100%',
+    height: '80%',
+    marginTop: 10,
   },
-  detailRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  detailKey: {
-    fontWeight: 'bold',
-    marginRight: 8,
-  },
-  detailValue: {
-    color: '#555',
+  errorText: {
+    color: 'red',
   },
   noDetails: {
     fontStyle: 'italic',
     color: '#888',
-  },
-  errorText: {
-    color: 'red',
   },
 });

@@ -8,9 +8,8 @@ const HomeScreenView: React.FC = () => {
   const { items, loading, error } = useHomeScreenViewModel();
   const router = useRouter(); // Initialize the router
 
-  const handlePress = (id: string) => {
-    // Navigate to the 'details' screen passing the smartphone id
-    router.push(`/details?id=${id}`);
+  const handlePress = (provice: string) => {
+    router.push(`/details?province=${provice}`);
   };
 
   if (loading) {
@@ -32,22 +31,12 @@ const HomeScreenView: React.FC = () => {
   const renderItem = ({ item }: { item: ItemData }) => (
     <View style={styles.itemContainer}>
       <Text style={styles.itemName}>{item.name}</Text>
-      {item.data ? (
-        <View style={styles.detailsContainer}>
-          {Object.entries(item.data).map(([key, value], index) => (
-            <View key={index} style={styles.detailRow}>
-              <Text style={styles.detailKey}>{key}:</Text>
-              <Text style={styles.detailValue}>{String(value)}</Text>
-            </View>
-          ))}
-        </View>
-      ) : (
-        <Text style={styles.noDetails}>No details available</Text>
-      )}
       {/* Add press event to navigate to the details screen */}
-      <Text style={styles.detailsButton} onPress={() => handlePress(item.id)}>
-        View Details
+      <Text style={styles.detailsButton} onPress={() => handlePress(item.province)}>
+        {item.address}
       </Text>
+      <Text style={styles.detailsContainer}>{item.region}</Text>
+      <Text style={styles.detailsContainer}>{item.phone}</Text>
     </View>
   );
 
@@ -55,13 +44,13 @@ const HomeScreenView: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>Binus Apps!</Text>
-        <Text style={styles.subtitle}>List of the Smartphones</Text>
+        <Text style={styles.title}>Binus Hospital</Text>
+        <Text style={styles.subtitle}>List of the Covid-19 Hospital</Text>
       </View>
       <FlatList
         data={items}
         renderItem={renderItem}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.name}
       />
     </SafeAreaView>
   );
